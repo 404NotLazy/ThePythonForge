@@ -13,11 +13,13 @@ from openai import OpenAI
 # Initialize the text-to-speech engine
 engine = pyttsx3.init()
 
+
 # Configure text-to-speech settings
 def speak(text):
     """Converts text to speech"""
     engine.say(text)
     engine.runAndWait()
+
 
 def listen():
     """Listens for a voice command and returns it as a string"""
@@ -36,35 +38,44 @@ def listen():
             speak("Sorry, there was an error with the speech recognition service.")
             return None
 
-# DeepSeek API Client Setup
-client = OpenAI(api_key="sk-ca64a4ee94c64fbe885ed7b33a946502", base_url="https://api.deepseek.com")
 
-def chat_with_deepseek(user_message):
-    """Send user message to DeepSeek API and return the response"""
+# OpenAI API Client Setup (using OpenRouter API)
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key="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",  # Replace with your actual API key
+)
+
+
+def chat_with_openrouter(user_message):
+    """Send user message to OpenRouter API and return the response"""
     try:
-        response = client.chat.completions.create(
-            model="deepseek-chat",
+        completion = client.chat.completions.create(
+            extra_body={},
+            model="deepseek/deepseek-r1:free",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant"},
+                {
+                    "role": "system",
+                    "content": "You are a super chill and supportive best friend (BSF) who loves to help with coding, life advice, and anything else with a friendly vibe.",
+                },
                 {"role": "user", "content": user_message},
             ],
-            stream=False
         )
-        return response.choices[0].message.content
+        return completion.choices[0].message.content
     except Exception as e:
         speak("Sorry, there was an error with the AI response.")
         print(f"Error: {e}")
         return None
+
 
 # App Launching Functionality
 def open_application(app_name):
     """Opens specified applications on the computer"""
     app_dict = {
         "calculator": "gnome-calculator",
-        "chrome": "google-chrome",
+        "chrome": "google-chrome-stable",
         "firefox": "firefox",
         "terminal": "mate-terminal",
-        "vlc": "vlc"
+        "vlc": "vlc",
     }
     app = app_dict.get(app_name)
     if app:
@@ -72,6 +83,7 @@ def open_application(app_name):
         speak(f"Opening {app_name}")
     else:
         speak(f"Sorry, I can't open {app_name} right now.")
+
 
 # Music Player Functionality
 def play_music(music_file):
@@ -86,20 +98,24 @@ def play_music(music_file):
     else:
         speak("Sorry, I couldn't find that music file.")
 
+
 def stop_music():
     """Stop the currently playing music"""
     pygame.mixer.music.stop()
     speak("Music stopped.")
+
 
 def pause_music():
     """Pause the current music"""
     pygame.mixer.music.pause()
     speak("Music paused.")
 
+
 def resume_music():
     """Resume the paused music"""
     pygame.mixer.music.unpause()
     speak("Resuming music.")
+
 
 # System Information Retrieval
 def system_info():
@@ -108,12 +124,17 @@ def system_info():
     memory = psutil.virtual_memory().percent
     battery = psutil.sensors_battery()
     battery_status = battery.percent if battery else "No battery data available"
-    speak(f"CPU usage is {cpu}%, RAM usage is {memory}%, and battery is at {battery_status}%.")
+    speak(
+        f"CPU usage is {cpu}%, RAM usage is {memory}%, and battery is at {battery_status}%."
+    )
+
 
 # Weather Checker using an API
 def get_weather(city):
     """Fetch the current weather of a city using OpenWeather API"""
-    api_key = "e46d6b1c945f2e9983f0735f8928ea2f"  # Get your free API key from OpenWeather
+    api_key = (
+        "e46d6b1c945f2e9983f0735f8928ea2f"  # Get your free API key from OpenWeather
+    )
     base_url = "http://api.openweathermap.org/data/2.5/weather?"
     complete_url = base_url + "q=" + city + "&appid=" + api_key
     response = requests.get(complete_url)
@@ -124,9 +145,12 @@ def get_weather(city):
         weather = data["weather"][0]
         description = weather["description"]
         temp = main["temp"] - 273.15  # Convert Kelvin to Celsius
-        speak(f"The temperature in {city} is {temp:.2f} degrees Celsius, with {description}.")
+        speak(
+            f"The temperature in {city} is {temp:.2f} degrees Celsius, with {description}."
+        )
     else:
         speak(f"Sorry, I couldn't find weather information for {city}.")
+
 
 # Note Taking Functionality
 def take_notes():
@@ -139,6 +163,7 @@ def take_notes():
         speak("Note added successfully.")
     else:
         speak("Sorry, I didn't catch that note.")
+
 
 # Reminders Functionality
 def set_reminder():
@@ -157,6 +182,7 @@ def set_reminder():
     except ValueError:
         speak("Sorry, I couldn't understand the time for the reminder.")
 
+
 # Web Search Functionality
 def web_search(query):
     """Search the web using a browser"""
@@ -165,19 +191,22 @@ def web_search(query):
     webbrowser.open(url)
     speak(f"Searching for {query} on Google.")
 
-# Chat Functionality (with DeepSeek Integration)
+
+# Chat Functionality (with OpenRouter Integration)
 def chat():
     """Main chat loop for voice commands"""
     while True:
         speak("How can I assist you today?")
         command = listen()
-        
+
         if command:
             if "open" in command:
                 app_name = command.split("open")[-1].strip()
                 open_application(app_name)
             elif "play" in command and "music" in command:
-                music_file = "path_to_your_music_file.mp3"  # Replace with your music file
+                music_file = (
+                    "path_to_your_music_file.mp3"  # Replace with your music file
+                )
                 play_music(music_file)
             elif "stop" in command and "music" in command:
                 stop_music()
@@ -201,12 +230,13 @@ def chat():
                 speak("Goodbye!")
                 break
             else:
-                # Use DeepSeek for AI responses
-                response = chat_with_deepseek(command)
+                # Use OpenRouter for AI responses
+                response = chat_with_openrouter(command)
                 if response:
                     speak(response)
                 else:
                     speak("Sorry, I couldn't understand that.")
+
 
 # Main Program
 if __name__ == "__main__":
